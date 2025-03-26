@@ -15,3 +15,6 @@ def run_algorithms(ref_string, frame_size):
         "Clock": clock(ref_string, frame_size)
     }
     return results
+def analyze_results(results):
+    best_algo = min(results, key=results.get)
+    return f"Most efficient: {best_algo} with {results[best_algo]} page faults"
