@@ -15,6 +15,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.submit_button)
         self.frame_field = QLineEdit(self)
 		layout.addWidget(self.frame_field)
+		self.submit_button.clicked.connect(self.run_simulation)
         
 def validate_input(self):
         """Validate the reference string input."""
@@ -26,6 +27,11 @@ def validate_input(self):
             self.input_field.setText("Invalid input! Enter space-separated integers.")
             return None
 
+def run_simulation(self):
+    ref_string = self.validate_input()
+    frame_size = int(self.frame_field.text()) if self.frame_field.text().isdigit() else 3
+    print(f"Reference String: {ref_string}, Frame Size: {frame_size}")
+    
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
