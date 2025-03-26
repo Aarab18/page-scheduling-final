@@ -1,5 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QTextEdit
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -16,6 +17,8 @@ class MainWindow(QMainWindow):
         self.frame_field = QLineEdit(self)
 		layout.addWidget(self.frame_field)
 		self.submit_button.clicked.connect(self.run_simulation)
+		self.result_area = QTextEdit(self)
+		layout.addWidget(self.result_area)
         
 def validate_input(self):
         """Validate the reference string input."""
@@ -31,6 +34,11 @@ def run_simulation(self):
     ref_string = self.validate_input()
     frame_size = int(self.frame_field.text()) if self.frame_field.text().isdigit() else 3
     print(f"Reference String: {ref_string}, Frame Size: {frame_size}")
+    
+def run_simulation(self):
+    ref_string = self.validate_input()
+    frame_size = int(self.frame_field.text()) if self.frame_field.text().isdigit() else 3
+    self.result_area.setText(f"Running simulation with {ref_string} and frame size {frame_size}")
     
 if __name__ == "__main__":
     app = QApplication(sys.argv)
