@@ -1,4 +1,11 @@
 def fifo(reference_string, frame_size):
+    """First In, First Out page replacement algorithm.
+    Args:
+        reference_string (list): List of page numbers.
+        frame_size (int): Number of frames available.
+    Returns:
+        int: Number of page faults.
+    """
     frames = []
     page_faults = 0
     for page in reference_string:
@@ -12,6 +19,13 @@ def fifo(reference_string, frame_size):
     return page_faults
 
 def lru(reference_string, frame_size):
+    """Least Recently Used page replacement algorithm.
+    Args:
+        reference_string (list): List of page numbers.
+        frame_size (int): Number of frames available.
+    Returns:
+        int: Number of page faults.
+    """
     frames = []
     page_faults = 0
     for page in reference_string:
@@ -28,6 +42,13 @@ def lru(reference_string, frame_size):
     return page_faults
 
 def optimal(reference_string, frame_size):
+    """Optimal page replacement algorithm (replaces page needed furthest in future).
+    Args:
+        reference_string (list): List of page numbers.
+        frame_size (int): Number of frames available.
+    Returns:
+        int: Number of page faults.
+    """
     frames = []
     page_faults = 0
     for i, page in enumerate(reference_string):
@@ -42,6 +63,13 @@ def optimal(reference_string, frame_size):
     return page_faults
 
 def second_chance(reference_string, frame_size):
+    """Second Chance page replacement algorithm (uses reference bits).
+    Args:
+        reference_string (list): List of page numbers.
+        frame_size (int): Number of frames available.
+    Returns:
+        int: Number of page faults.
+    """
     frames = []
     ref_bits = []
     pointer = 0
@@ -64,6 +92,13 @@ def second_chance(reference_string, frame_size):
     return page_faults
 
 def clock(reference_string, frame_size):
+    """Clock page replacement algorithm (circular list with pointer).
+    Args:
+        reference_string (list): List of page numbers.
+        frame_size (int): Number of frames available.
+    Returns:
+        int: Number of page faults.
+    """
     frames = [None] * frame_size
     ref_bits = [0] * frame_size
     pointer = 0
