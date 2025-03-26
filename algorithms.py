@@ -28,7 +28,18 @@ def lru(reference_string, frame_size):
     return page_faults
 
 def optimal(reference_string, frame_size):
-    pass
+    frames = []
+    page_faults = 0
+    for i, page in enumerate(reference_string):
+        if page not in frames:
+            if len(frames) < frame_size:
+                frames.append(page)
+            else:
+                future = reference_string[i+1:]
+                replace = max(frames, key=lambda x: future.index(x) if x in future else float('inf'))
+                frames[frames.index(replace)] = page
+            page_faults += 1
+    return page_faults
 
 def second_chance(reference_string, frame_size):
     pass
