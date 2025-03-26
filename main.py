@@ -26,3 +26,22 @@ def plot_results(results):
     plt.xlabel("Algorithm")
     plt.ylabel("Page Faults")
     plt.show()
+    
+def main():
+    import sys
+    from PyQt5.QtWidgets import QApplication
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
+
+# In gui.py, update run_simulation
+def run_simulation(self):
+    ref_string = self.validate_input()
+    frame_size = int(self.frame_field.text()) if self.frame_field.text().isdigit() else 3
+    results = run_algorithms(ref_string, frame_size)
+    analysis = analyze_results(results)
+    self.result_area.setText(str(results) + "\n" + analysis)
+    plot_results(results)
+    
+	
