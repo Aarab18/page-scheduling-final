@@ -80,3 +80,12 @@ def clock(reference_string, frame_size):
         else:
             ref_bits[frames.index(page)] = 1
     return page_faults
+
+if __name__ == "__main__":
+    ref_string = [1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5]
+    frame_size = 3
+    print(f"FIFO: {fifo(ref_string, frame_size)}")
+    print(f"LRU: {lru(ref_string, frame_size)}")
+    print(f"Optimal: {optimal(ref_string, frame_size)}")
+    print(f"Second Chance: {second_chance(ref_string, frame_size)}")
+    print(f"Clock: {clock(ref_string, frame_size)}")
