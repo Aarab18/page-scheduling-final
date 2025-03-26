@@ -13,6 +13,8 @@ class MainWindow(QMainWindow):
         self.submit_button = QPushButton("Run Simulation", self)
         layout.addWidget(self.input_field)
         layout.addWidget(self.submit_button)
+        self.frame_field = QLineEdit(self)
+		layout.addWidget(self.frame_field)
         
 def validate_input(self):
         """Validate the reference string input."""
