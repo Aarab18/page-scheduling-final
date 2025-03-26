@@ -18,3 +18,11 @@ def run_algorithms(ref_string, frame_size):
 def analyze_results(results):
     best_algo = min(results, key=results.get)
     return f"Most efficient: {best_algo} with {results[best_algo]} page faults"
+import matplotlib.pyplot as plt
+
+def plot_results(results):
+    plt.bar(results.keys(), results.values())
+    plt.title("Page Faults by Algorithm")
+    plt.xlabel("Algorithm")
+    plt.ylabel("Page Faults")
+    plt.show()
