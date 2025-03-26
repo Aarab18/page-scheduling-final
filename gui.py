@@ -40,6 +40,7 @@ def run_simulation(self):
     ref_string = self.validate_input()
     frame_size = int(self.frame_field.text()) if self.frame_field.text().isdigit() else 3
     self.result_area.setText(f"Running simulation with {ref_string} and frame size {frame_size}")
+    self.result_area.append("Graph placeholder")
     
 if __name__ == "__main__":
     app = QApplication(sys.argv)
