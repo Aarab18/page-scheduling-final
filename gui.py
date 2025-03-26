@@ -13,6 +13,16 @@ class MainWindow(QMainWindow):
         self.submit_button = QPushButton("Run Simulation", self)
         layout.addWidget(self.input_field)
         layout.addWidget(self.submit_button)
+        
+def validate_input(self):
+        """Validate the reference string input."""
+        text = self.input_field.text()
+        try:
+            ref_string = [int(x) for x in text.split()]
+            return ref_string
+        except ValueError:
+            self.input_field.setText("Invalid input! Enter space-separated integers.")
+            return None
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
