@@ -19,6 +19,7 @@ class MainWindow(QMainWindow):
 		self.submit_button.clicked.connect(self.run_simulation)
 		self.result_area = QTextEdit(self)
 		layout.addWidget(self.result_area)
+		self.setStyleSheet("QLineEdit { padding: 5px; } QPushButton { padding: 10px; }")
         
 def validate_input(self):
         """Validate the reference string input."""
