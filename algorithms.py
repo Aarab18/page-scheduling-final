@@ -64,4 +64,19 @@ def second_chance(reference_string, frame_size):
     return page_faults
 
 def clock(reference_string, frame_size):
-    pass
+    frames = [None] * frame_size
+    ref_bits = [0] * frame_size
+    pointer = 0
+    page_faults = 0
+    for page in reference_string:
+        if page not in frames:
+            while ref_bits[pointer]:
+                ref_bits[pointer] = 0
+                pointer = (pointer + 1) % frame_size
+            frames[pointer] = page
+            ref_bits[pointer] = 1
+            pointer = (pointer + 1) % frame_size
+            page_faults += 1
+        else:
+            ref_bits[frames.index(page)] = 1
+    return page_faults
