@@ -238,7 +238,7 @@ class PageReplacementSimulator(QMainWindow):
         msg.setStyleSheet(f"""
             QMessageBox {{ background: {self.bg_color}; border-radius: 10px; }}
             QLabel {{ color: {self.text_primary}; }}
-            QPushButton {{ background: #ff6b6b; color: white; padding: 8px 20px; border-radius: 15px; }}
+            QPushButton {{ backgroundmuButton {{ background: #ff6b6b; color: white; padding: 8px 20px; border-radius: 15px; }}
         """)
         msg.setWindowTitle("Error")
         msg.setText(message)
@@ -254,20 +254,26 @@ class PageReplacementSimulator(QMainWindow):
             self.show_error("Frame size must be positive")
             return
         
-        # Simulate algorithms (placeholder values)
-        results = {
-            'FIFO': 11,
-            'LRU': 11,
-            'Optimal': 8,
-            'Second Chance': 11,
-            'Clock': 11
+        # Import algorithms
+        from algorithms import fifo, lru, optimal, second_chance, clock
+        
+        algo_functions = {
+            'FIFO': fifo,
+            'LRU': lru,
+            'Optimal': optimal,
+            'Second Chance': second_chance,
+            'Clock': clock
         }
         
+        results = {}
         selected_algo = self.algo_dropdown.currentText()
-        if selected_algo != "All Algorithms":
-            results = {selected_algo: results[selected_algo]}
+        if selected_algo == "All Algorithms":
+            for algo_name, algo_func in algo_functions.items():
+                results[algo_name] = algo_func(ref_string, frame_size)
+        else:
+            results[selected_algo] = algo_functions[selected_algo](ref_string, frame_size)
         
-        most_efficient = min(results, key=results.get)
+        most_efficient = min(results, key=lambda x: results[x]["faults"])
         
         self.statusBar.showMessage("Processing...")
         self.progress_bar.show()
@@ -280,18 +286,25 @@ class PageReplacementSimulator(QMainWindow):
         result_text = f"<h3>Page Replacement Simulation Results</h3>"
         result_text += f"<p><b>Reference String:</b> {' '.join(map(str, ref_string))}</p>"
         result_text += f"<p><b>Frame Size:</b> {frame_size}</p>"
-        result_text += "<h4>Page Fault Analysis:</h4>"
-        result_text += "<table border='1' cellpadding='5' style='border-collapse: collapse; width: 100%;'>"
-        result_text += "<tr style='background-color: #f2f2f2;'><th>Algorithm</th><th>Page Faults</th></tr>"
+        result_text += "<h4>Algorithm Details:</h4>"
         
-        for algo, faults in sorted(results.items(), key=lambda x: x[1]):
-            result_text += f"<tr><td>{algo}</td><td>{faults}</td></tr>"
+        for algo, result in results.items():
+            result_text += f"<h4>{algo} (Total Faults: {result['faults']})</h4>"
+            result_text += "<table border='1' cellpadding='5' style='border-collapse: collapse; width: 100%;'>"
+            result_text += "<tr style='background-color: #f2f2f2;'><th>Page</th><th>Frames Before</th><th>Frames After</th><th>Page Fault</th></tr>"
+            
+            for step in result["steps"]:
+                frames_before = " ".join(map(str, step["frames_before"])) or "-"
+                frames_after = " ".join(map(str, step["frames_after"])) or "-"
+                fault = "Yes" if step["page_fault"] else "No"
+                result_text += f"<tr><td>{step['page']}</td><td>{frames_before}</td><td>{frames_after}</td><td>{fault}</td></tr>"
+            
+            result_text += "</table><br>"
         
-        result_text += "</table>"
-        result_text += f"<p style='color: {self.accent_color};'><b>Most Efficient:</b> {most_efficient} ({results[most_efficient]} faults)</p>"
+        result_text += f"<p style='color: {self.accent_color};'><b>Most Efficient:</b> {most_efficient} ({results[most_efficient]['faults']} faults)</p>"
         
         self.result_area.setHtml(result_text)
-        self.plot_graph(results)
+        self.plot_graph({algo: result["faults"] for algo, result in results.items()})
     
     def update_progress(self):
         self.progress_value += 10
