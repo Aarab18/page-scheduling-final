@@ -3,7 +3,7 @@ import numpy as np
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QHBoxLayout, QLineEdit, QPushButton, QLabel,
                             QMessageBox, QTextEdit, QStatusBar, QGraphicsDropShadowEffect,
-                            QCheckBox, QProgressBar, QComboBox)
+                            QCheckBox, QProgressBar, QComboBox, QGridLayout, QScrollArea)
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt, QTimer
 from matplotlib.figure import Figure
@@ -13,29 +13,38 @@ class PageReplacementSimulator(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.results = {}
+        self.current_step = 0
         
     def initUI(self):
         self.setWindowTitle("Page Replacement Simulator")
-        self.setGeometry(100, 100, 1250, 900)
-        self.dark_mode = False
+        self.setGeometry(100, 100, 2000, 1400)  # Further expanded window size
         
-        # Main widget and layout
+        # Central widget with scroll area
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        self.main_layout = QVBoxLayout()
-        self.main_layout.setSpacing(25)
-        self.central_widget.setLayout(self.main_layout)
+        
+        # Scroll area for the entire page
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_container = QWidget()
+        self.main_layout = QVBoxLayout(self.scroll_container)
+        self.main_layout.setSpacing(30)
+        self.scroll_area.setWidget(self.scroll_container)
+        
+        # Add scroll area to central widget
+        central_layout = QVBoxLayout(self.central_widget)
+        central_layout.addWidget(self.scroll_area)
         
         # Create UI components
         self.create_header()
         self.create_input_container()
         self.create_progress_bar()
+        self.create_visualization_area()
+        self.create_control_buttons()
         self.create_result_area()
         self.create_graph()
         self.create_status_bar()
-        
-        # Connect signals
-        self.submit_button.clicked.connect(self.run_simulation)
         
         # Apply initial theme
         self.set_light_theme()
@@ -66,7 +75,7 @@ class PageReplacementSimulator(QMainWindow):
         self.input_field.setPlaceholderText("Reference String (e.g., 1 2 3 4)")
         self.input_field.setFont(QFont("Segoe UI", 12))
         self.input_field.textChanged.connect(self.validate_input_live)
-        self.input_field.setMinimumWidth(400)
+        self.input_field.setMinimumWidth(500)  # Larger input field
         input_layout.addWidget(self.input_field)
         
         self.frame_field = QLineEdit()
@@ -86,6 +95,7 @@ class PageReplacementSimulator(QMainWindow):
         self.submit_button = QPushButton("Run Simulation")
         self.submit_button.setFont(QFont("Segoe UI", 12, QFont.Bold))
         self.submit_button.setCursor(Qt.PointingHandCursor)
+        self.submit_button.clicked.connect(self.run_simulation)
         input_layout.addWidget(self.submit_button)
         
         self.main_layout.addWidget(self.input_container)
@@ -98,15 +108,61 @@ class PageReplacementSimulator(QMainWindow):
         self.progress_bar.hide()
         self.main_layout.addWidget(self.progress_bar)
     
+    def create_visualization_area(self):
+        self.vis_widget = QWidget()
+        self.vis_layout = QVBoxLayout(self.vis_widget)
+        
+        self.step_label = QLabel("Step 0: Initial State")
+        self.step_label.setFont(QFont("Segoe UI", 16))
+        self.vis_layout.addWidget(self.step_label)
+        
+        # Scroll area for side-by-side grids
+        self.vis_scroll = QScrollArea()
+        self.vis_scroll.setWidgetResizable(True)
+        self.vis_scroll.setMinimumHeight(400)  # Larger visualization area
+        self.vis_container = QWidget()
+        self.vis_grid_layout = QHBoxLayout(self.vis_container)
+        self.vis_grid_layout.setSpacing(30)
+        self.vis_scroll.setWidget(self.vis_container)
+        self.vis_layout.addWidget(self.vis_scroll)
+        
+        self.algo_grids = {}
+        self.main_layout.addWidget(self.vis_widget)
+    
+    def create_control_buttons(self):
+        self.control_widget = QWidget()
+        control_layout = QHBoxLayout(self.control_widget)
+        
+        self.prev_button = QPushButton("Previous Step")
+        self.prev_button.setFont(QFont("Segoe UI", 12))
+        self.prev_button.setCursor(Qt.PointingHandCursor)
+        self.prev_button.clicked.connect(self.prev_step)
+        control_layout.addWidget(self.prev_button)
+        
+        self.next_button = QPushButton("Next Step")
+        self.next_button.setFont(QFont("Segoe UI", 12))
+        self.next_button.setCursor(Qt.PointingHandCursor)
+        self.next_button.clicked.connect(self.next_step)
+        control_layout.addWidget(self.next_button)
+        
+        self.auto_play = QCheckBox("Auto Play")
+        self.auto_play.setFont(QFont("Segoe UI", 12))
+        self.auto_play.stateChanged.connect(self.toggle_auto_play)
+        control_layout.addWidget(self.auto_play)
+        
+        self.main_layout.addWidget(self.control_widget)
+    
     def create_result_area(self):
         self.result_area = QTextEdit()
         self.result_area.setFont(QFont("Segoe UI", 12))
         self.result_area.setReadOnly(True)
+        self.result_area.setMinimumHeight(600)  # Much larger result area
         self.main_layout.addWidget(self.result_area)
     
     def create_graph(self):
-        self.figure = Figure(figsize=(10, 4.5), facecolor='none')
+        self.figure = Figure(figsize=(15, 6), facecolor='none')  # Larger graph
         self.canvas = FigureCanvas(self.figure)
+        self.canvas.setMinimumHeight(400)  # Ensure graph is tall enough
         self.main_layout.addWidget(self.canvas)
     
     def create_status_bar(self):
@@ -138,6 +194,7 @@ class PageReplacementSimulator(QMainWindow):
     
     def update_styles(self):
         self.central_widget.setStyleSheet(f"background-color: {self.bg_color}; color: {self.text_primary};")
+        self.scroll_container.setStyleSheet(f"background-color: {self.bg_color};")
         self.title.setStyleSheet(f"color: {self.text_primary}; background-color: transparent;")
         
         self.theme_toggle.setStyleSheet(f"""
@@ -158,16 +215,24 @@ class PageReplacementSimulator(QMainWindow):
             QComboBox {{ background-color: {self.bg_secondary}; color: {self.text_primary}; 
                         padding: 8px; border-radius: 5px; border: 1px solid {self.border_color}; }}
             QComboBox::drop-down {{ border: none; width: 30px; }}
-            QComboBox::down-arrow {{ image: url(down-arrow.png); width: 14px; height: 14px; }}
             QComboBox QAbstractItemView {{ background-color: {self.bg_secondary}; color: {self.text_primary};
                                          border: 1px solid {self.border_color}; }}
         """)
         
-        self.submit_button.setStyleSheet(f"""
+        button_style = f"""
             QPushButton {{ background-color: {self.accent_color}; color: {self.bg_color}; border: none;
                           padding: 10px 20px; font-weight: bold; border-radius: 5px; }}
             QPushButton:hover {{ opacity: 0.9; }}
             QPushButton:pressed {{ opacity: 0.8; }}
+        """
+        self.submit_button.setStyleSheet(button_style)
+        self.prev_button.setStyleSheet(button_style)
+        self.next_button.setStyleSheet(button_style)
+        
+        self.auto_play.setStyleSheet(f"""
+            QCheckBox {{ color: {self.text_primary}; spacing: 5px; }}
+            QCheckBox::indicator {{ width: 20px; height: 20px; border-radius: 10px; border: 2px solid {self.accent_color}; }}
+            QCheckBox::indicator:checked {{ background-color: {self.accent_color}; }}
         """)
         
         self.result_area.setStyleSheet(f"background-color: {self.bg_secondary}; color: {self.text_primary}; border: none; padding: 10px;")
@@ -182,6 +247,7 @@ class PageReplacementSimulator(QMainWindow):
         shadow_effect.setOffset(0, 2)
         self.input_container.setGraphicsEffect(shadow_effect)
         self.result_area.setGraphicsEffect(shadow_effect)
+        self.vis_widget.setGraphicsEffect(shadow_effect)
         
         self.statusBar.setStyleSheet(f"background-color: {self.bg_secondary}; color: {self.text_secondary};")
     
@@ -192,6 +258,7 @@ class PageReplacementSimulator(QMainWindow):
         else:
             self.set_light_theme()
         self.update_styles()
+        self.update_visualization()
     
     def validate_input_live(self):
         text = self.input_field.text().strip()
@@ -238,7 +305,7 @@ class PageReplacementSimulator(QMainWindow):
         msg.setStyleSheet(f"""
             QMessageBox {{ background: {self.bg_color}; border-radius: 10px; }}
             QLabel {{ color: {self.text_primary}; }}
-            QPushButton {{ backgroundmuButton {{ background: #ff6b6b; color: white; padding: 8px 20px; border-radius: 15px; }}
+            QPushButton {{ background: #ff6b6b; color: white; padding: 8px 20px; border-radius: 15px; }}
         """)
         msg.setWindowTitle("Error")
         msg.setText(message)
@@ -254,7 +321,6 @@ class PageReplacementSimulator(QMainWindow):
             self.show_error("Frame size must be positive")
             return
         
-        # Import algorithms
         from algorithms import fifo, lru, optimal, second_chance, clock
         
         algo_functions = {
@@ -265,15 +331,15 @@ class PageReplacementSimulator(QMainWindow):
             'Clock': clock
         }
         
-        results = {}
+        self.results = {}
         selected_algo = self.algo_dropdown.currentText()
         if selected_algo == "All Algorithms":
             for algo_name, algo_func in algo_functions.items():
-                results[algo_name] = algo_func(ref_string, frame_size)
+                self.results[algo_name] = algo_func(ref_string, frame_size)
         else:
-            results[selected_algo] = algo_functions[selected_algo](ref_string, frame_size)
+            self.results[selected_algo] = algo_functions[selected_algo](ref_string, frame_size)
         
-        most_efficient = min(results, key=lambda x: results[x]["faults"])
+        self.current_step = 0
         
         self.statusBar.showMessage("Processing...")
         self.progress_bar.show()
@@ -286,25 +352,100 @@ class PageReplacementSimulator(QMainWindow):
         result_text = f"<h3>Page Replacement Simulation Results</h3>"
         result_text += f"<p><b>Reference String:</b> {' '.join(map(str, ref_string))}</p>"
         result_text += f"<p><b>Frame Size:</b> {frame_size}</p>"
-        result_text += "<h4>Algorithm Details:</h4>"
+        result_text += "<h4>Detailed Steps:</h4>"
         
-        for algo, result in results.items():
+        for algo, result in self.results.items():
             result_text += f"<h4>{algo} (Total Faults: {result['faults']})</h4>"
             result_text += "<table border='1' cellpadding='5' style='border-collapse: collapse; width: 100%;'>"
-            result_text += "<tr style='background-color: #f2f2f2;'><th>Page</th><th>Frames Before</th><th>Frames After</th><th>Page Fault</th></tr>"
+            result_text += "<tr style='background-color: #f2f2f2;'><th>Step</th><th>Page</th><th>Frames Before</th><th>Frames After</th><th>Page Fault</th></tr>"
             
-            for step in result["steps"]:
+            for i, step in enumerate(result["steps"]):
                 frames_before = " ".join(map(str, step["frames_before"])) or "-"
                 frames_after = " ".join(map(str, step["frames_after"])) or "-"
                 fault = "Yes" if step["page_fault"] else "No"
-                result_text += f"<tr><td>{step['page']}</td><td>{frames_before}</td><td>{frames_after}</td><td>{fault}</td></tr>"
+                result_text += f"<tr><td>{i+1}</td><td>{step['page']}</td><td>{frames_before}</td><td>{frames_after}</td><td>{fault}</td></tr>"
             
             result_text += "</table><br>"
         
-        result_text += f"<p style='color: {self.accent_color};'><b>Most Efficient:</b> {most_efficient} ({results[most_efficient]['faults']} faults)</p>"
+        most_efficient = min(self.results, key=lambda x: self.results[x]["faults"])
+        result_text += f"<p style='color: {self.accent_color};'><b>Most Efficient:</b> {most_efficient} ({self.results[most_efficient]['faults']} faults)</p>"
         
         self.result_area.setHtml(result_text)
-        self.plot_graph({algo: result["faults"] for algo, result in results.items()})
+        self.plot_graph({algo: result["faults"] for algo, result in self.results.items()})
+        self.setup_visualization(frame_size)
+        self.update_visualization()
+    
+    def setup_visualization(self, frame_size):
+        for algo in self.algo_grids:
+            for label in self.algo_grids[algo]["labels"]:
+                self.algo_grids[algo]["grid"].removeWidget(label)
+                label.deleteLater()
+        self.algo_grids.clear()
+        
+        for algo in self.results:
+            algo_widget = QWidget()
+            algo_layout = QVBoxLayout(algo_widget)
+            algo_label = QLabel(algo)
+            algo_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
+            algo_label.setAlignment(Qt.AlignCenter)
+            algo_layout.addWidget(algo_label)
+            
+            grid = QGridLayout()
+            labels = []
+            for i in range(frame_size):
+                label = QLabel("-")
+                label.setFont(QFont("Segoe UI", 16))
+                label.setAlignment(Qt.AlignCenter)
+                label.setFixedSize(80, 80)  # Larger frame boxes
+                label.setStyleSheet(f"background-color: {self.bg_secondary}; border: 2px solid {self.border_color}; border-radius: 5px;")
+                grid.addWidget(label, i, 0)
+                labels.append(label)
+            
+            algo_layout.addLayout(grid)
+            self.vis_grid_layout.addWidget(algo_widget)
+            self.algo_grids[algo] = {"grid": grid, "labels": labels}
+    
+    def update_visualization(self):
+        if not self.results:
+            return
+        
+        if self.current_step >= len(next(iter(self.results.values()))["steps"]):
+            self.current_step = len(next(iter(self.results.values()))["steps"]) - 1
+        elif self.current_step < 0:
+            self.current_step = 0
+        
+        step_info = f"Step {self.current_step + 1}: Page {next(iter(self.results.values()))['steps'][self.current_step]['page']}"
+        self.step_label.setText(step_info)
+        
+        for algo, result in self.results.items():
+            step = result["steps"][self.current_step]
+            frames_after = step["frames_after"]
+            for i, label in enumerate(self.algo_grids[algo]["labels"]):
+                if i < len(frames_after):
+                    label.setText(str(frames_after[i]))
+                    label.setStyleSheet(f"background-color: {'#ff6b6b' if step['page_fault'] and i == len(frames_after) - 1 else self.bg_secondary}; border: 2px solid {self.border_color}; border-radius: 5px; color: {self.text_primary};")
+                else:
+                    label.setText("-")
+                    label.setStyleSheet(f"background-color: {self.bg_secondary}; border: 2px solid {self.border_color}; border-radius: 5px; color: {self.text_primary};")
+    
+    def next_step(self):
+        if self.results and self.current_step < len(next(iter(self.results.values()))["steps"]) - 1:
+            self.current_step += 1
+            self.update_visualization()
+    
+    def prev_step(self):
+        if self.results and self.current_step > 0:
+            self.current_step -= 1
+            self.update_visualization()
+    
+    def toggle_auto_play(self):
+        if self.auto_play.isChecked():
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.next_step)
+            self.timer.start(1000)
+        else:
+            if hasattr(self, 'timer'):
+                self.timer.stop()
     
     def update_progress(self):
         self.progress_value += 10
